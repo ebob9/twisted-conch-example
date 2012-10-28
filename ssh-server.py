@@ -9,6 +9,8 @@ from twisted.conch.interfaces import IConchUser
 from twisted.conch.avatar import ConchUser
 from twisted.conch.ssh.channel import SSHChannel
 from twisted.conch.ssh.session import parseRequest_pty_req
+from twisted.internet.protocol import Protocol
+from twisted.conch.ssh.session import SSHSession, SSHSessionProcessProtocol, wrapProtocol
 
 from twisted.python import log
 import sys
@@ -22,6 +24,16 @@ with open('id_rsa.pub') as publicBlobFile:
     publicBlob = publicBlobFile.read()
     publicKey  = Key.fromString(data=publicBlob)
 
+class EchoProtocol(Protocol):
+    def connectionMade(self):
+        self.transport.write("Echo protocol connected\r\n")
+
+    def dataReceived(self, bytes):
+        self.transport.write("echo: " + repr(bytes) + "\r\n")
+
+    def connectionLost(self, reason):
+        print 'Connection lost', reason
+
 def nothing():
     pass
 
@@ -32,6 +44,11 @@ class SimpleSession(SSHChannel):
         self.write("echo: " + repr(bytes) + "\r\n")
         
     def request_shell(self, data):
+        protocol  = EchoProtocol()
+        transport = SSHSessionProcessProtocol(self)
+        protocol.makeConnection(transport)
+        transport.makeConnection(wrapProtocol(protocol))
+        self.client = transport
         return True
 
     def request_pty_req(self, data):
