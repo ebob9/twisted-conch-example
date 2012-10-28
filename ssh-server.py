@@ -37,6 +37,15 @@ class SimpleSession(SSHChannel):
     def request_pty_req(self, data):
          return True
 
+    def eofReceived(self):
+        print 'eofReceived'
+
+    def closed(self):
+        print 'closed'
+
+    def closeReceived(self):
+        print 'closeReceived'
+
 class SimpleRealm(object):
     def requestAvatar(self, avatarId, mind, *interfaces):
         user = ConchUser()
