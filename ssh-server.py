@@ -7,6 +7,7 @@ from twisted.conch.ssh.keys import Key
 from twisted.cred.checkers import FilePasswordDB
 from twisted.conch.interfaces import IConchUser
 from twisted.conch.avatar import ConchUser
+from twisted.conch.ssh.channel import SSHChannel
 
 from twisted.python import log
 import sys
@@ -23,9 +24,19 @@ with open('id_rsa.pub') as publicBlobFile:
 def nothing():
     pass
 
+class SimpleSession(SSHChannel):
+    name = 'session'
+
+    def request_shell(self, data):
+        self.write("This session is very simple. Good bye!\r\n")
+        self.loseConnection()
+        return True
+
 class SimpleRealm(object):
     def requestAvatar(self, avatarId, mind, *interfaces):
-        return IConchUser, ConchUser(), nothing
+        user = ConchUser()
+        user.channelLookup['session'] = SimpleSession
+        return IConchUser, user, nothing
 
 factory = SSHFactory()
 factory.privateKeys = { 'ssh-rsa': privateKey }
