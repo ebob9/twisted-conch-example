@@ -28,16 +28,13 @@ def nothing():
 class SimpleSession(SSHChannel):
     name = 'session'
 
+    def dataReceived(self, bytes):
+        self.write("echo: " + repr(bytes) + "\r\n")
+        
     def request_shell(self, data):
-        self.write(
-            "Your terminal name is %r.  "
-            "Your terminal is %d columns wide and %d rows tall." % (
-                self.terminalName, self.windowSize[0], self.windowSize[1]))
-        self.loseConnection()
         return True
 
     def request_pty_req(self, data):
-         self.terminalName, self.windowSize, modes = parseRequest_pty_req(data)
          return True
 
 class SimpleRealm(object):
