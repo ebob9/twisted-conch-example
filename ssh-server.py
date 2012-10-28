@@ -8,6 +8,7 @@ from twisted.cred.checkers import FilePasswordDB
 from twisted.conch.interfaces import IConchUser
 from twisted.conch.avatar import ConchUser
 from twisted.conch.ssh.channel import SSHChannel
+from twisted.conch.ssh.session import parseRequest_pty_req
 
 from twisted.python import log
 import sys
@@ -28,9 +29,16 @@ class SimpleSession(SSHChannel):
     name = 'session'
 
     def request_shell(self, data):
-        self.write("This session is very simple. Good bye!\r\n")
+        self.write(
+            "Your terminal name is %r.  "
+            "Your terminal is %d columns wide and %d rows tall." % (
+                self.terminalName, self.windowSize[0], self.windowSize[1]))
         self.loseConnection()
         return True
+
+    def request_pty_req(self, data):
+         self.terminalName, self.windowSize, modes = parseRequest_pty_req(data)
+         return True
 
 class SimpleRealm(object):
     def requestAvatar(self, avatarId, mind, *interfaces):
